@@ -1,0 +1,15 @@
+[package]
+name = "array_ops"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "A selection of useful array operations"
+repository = "https://github.com/sigurd4/array_ops"
+keywords = ["array", "util", "ops"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+moddef = "0.2.2"
+array_trait = "1.0.0"
+slice_ops = "0.1.0"
