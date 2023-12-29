@@ -25,16 +25,15 @@ moddef::moddef!(
         array_2d_ops,
         array_nd_ops,
         array_ops,
-        //const_iter_mut,
-        //const_iter,
-        //const_iterator,
-        //into_const_iter,
         padded,
         //partitioned_array,
         //partitioned_array_ops
     },
     mod private
 );
+
+pub use array_trait::*;
+pub use slice_ops;
 
 pub const fn min_len(a: usize, b: usize) -> usize
 {
