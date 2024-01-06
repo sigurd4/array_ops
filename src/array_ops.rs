@@ -177,6 +177,9 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
         Map: /*~const*/ FnMut<(T, Rhs)> + ~const Destruct,
         T: Copy,
         Rhs: Copy;
+    fn flat_map<Map, O, const M: usize>(self, map: Map) -> [O; N*M]
+    where
+        Map: /*~const*/ FnMut<(T,), Output = [O; M]> + ~const Destruct;
 
     /// Combines two arrays with possibly different items into parallel, where each element lines up in the same position.
     /// 
@@ -1336,6 +1339,15 @@ where
 {
     crate::map(*array, /*const*/ |x| crate::map(*rhs, /*const*/ |y| map(x, y)))
 }
+pub fn flat_map<T, const N: usize, Map, O, const M: usize>(array: [T; N], map: Map) -> [O; N*M]
+where
+    Map: /*~const*/ FnMut<(T,), Output = [O; M]> + /*~const*/ Destruct
+{
+    let mapped = crate::map(array, map);
+    unsafe {
+        private::transmute_unchecked_size(mapped)
+    }
+}
 
 pub /*const*/ fn zip<T, const N: usize, Z>(array: [T; N], other: [Z; N]) -> [(T, Z); N]
 {
@@ -2230,6 +2242,12 @@ impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
         Rhs: Copy
     {
         crate::comap_outer(self, rhs, map)
+    }
+    fn flat_map<Map, O, const M: usize>(self, map: Map) -> [O; N*M]
+    where
+        Map: /*~const*/ FnMut<(T,), Output = [O; M]> + /*~const*/ Destruct
+    {
+        crate::flat_map(self, map)
     }
     
     fn zip<Z>(self, other: [Z; N]) -> [(T, Z); N]
