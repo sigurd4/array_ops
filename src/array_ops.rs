@@ -1,4 +1,4 @@
-use core::{ops::{Sub, AddAssign, Deref, DerefMut, Mul, Div, Add, Neg, MulAssign}, mem::{ManuallyDrop, MaybeUninit}, borrow::{Borrow, BorrowMut}, marker::Destruct};
+use core::{borrow::{Borrow, BorrowMut}, marker::Destruct, mem::{ManuallyDrop, MaybeUninit}, ops::{Sub, AddAssign, Deref, DerefMut, Mul, Div, Add, Neg, MulAssign}};
 
 use array_trait::Array;
 
@@ -1682,13 +1682,46 @@ pub /*const*/ fn try_mul_dot<T, const N: usize, Rhs>(array: [T; N], rhs: [Rhs; N
 where
     T: Mul<Rhs, Output: AddAssign>
 {
-    crate::try_sum(crate::mul_each(array, rhs))
+    if N == 0
+    {
+        return None
+    }
+    
+    let ptr1 = array.as_ptr();
+    let ptr2 = rhs.as_ptr();
+
+    unsafe {
+        let mut sum = ptr1.read()*ptr2.read();
+        let mut i = 1;
+        while i < N
+        {
+            sum += ptr1.add(i).read()*ptr2.add(i).read();
+            i += 1;
+        }
+        core::mem::forget(array);
+        core::mem::forget(rhs);
+        Some(sum)
+    }
 }
 pub /*const*/ fn mul_dot_bias<T, const N: usize, Rhs>(array: [T; N], rhs: [Rhs; N], bias: <T as Mul<Rhs>>::Output) -> <T as Mul<Rhs>>::Output
 where
     T: Mul<Rhs, Output: AddAssign>
 {
-    crate::sum_from(crate::mul_each(array, rhs), bias)
+    let ptr1 = array.as_ptr();
+    let ptr2 = rhs.as_ptr();
+
+    let mut sum = bias;
+    let mut i = 0;
+    while i < N
+    {
+        sum += unsafe {
+            ptr1.add(i).read()*ptr2.add(i).read()
+        };
+        i += 1;
+    }
+    core::mem::forget(array);
+    core::mem::forget(rhs);
+    sum
 }
 
 pub /*const*/ fn mul_outer<T, const N: usize, Rhs, const M: usize>(array: &[T; N], rhs: &[Rhs; M]) -> [[<T as Mul<Rhs>>::Output; M]; N]
