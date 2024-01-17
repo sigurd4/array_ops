@@ -24,6 +24,15 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     fn rfill<F>(fill: F) -> Self
     where
         F: /*~const*/ FnMut(usize) -> T + ~const Destruct;
+        
+    #[cfg(feature = "std")]
+    fn fill_boxed<F>(fill: F) -> Box<Self>
+    where
+        F: /*~const*/ FnMut(usize) -> T + ~const Destruct;
+    #[cfg(feature = "std")]
+    fn rfill_boxed<F>(fill: F) -> Box<Self>
+    where
+        F: /*~const*/ FnMut(usize) -> T + ~const Destruct;
 
     /*fn for_each<F>(self, action: F) -> ()
     where
@@ -963,6 +972,53 @@ where
         }
     }
     unsafe {MaybeUninit::array_assume_init(array)}
+}
+
+#[cfg(feature = "std")]
+pub /*const*/ fn fill_boxed<const N: usize, F>(mut fill: F) -> Box<[<F as FnOnce<(usize,)>>::Output; N]>
+where
+    F: FnMut<(usize,)> + /*~const*/ Destruct
+{
+    let array = Box::new_uninit();
+    let mut array: Box<[<F as FnOnce<(usize,)>>::Output; N]> = unsafe {
+        array.assume_init()
+    };
+    let mut i = 0;
+    while i != N
+    {
+        unsafe {
+            array.as_mut_ptr().add(i).write(fill(i));
+        }
+        i += 1;
+    }
+    array
+}
+
+#[cfg(feature = "std")]
+pub /*const*/ fn rfill_boxed<const N: usize, F>(mut fill: F) -> Box<[<F as FnOnce<(usize,)>>::Output; N]>
+where
+    F: FnMut<(usize,)> + /*~const*/ Destruct
+{
+    let array = Box::new_uninit();
+    let mut array: Box<[<F as FnOnce<(usize,)>>::Output; N]> = unsafe {
+        array.assume_init()
+    };
+    if N != 0
+    {
+        let mut i = N - 1;
+        loop
+        {
+            unsafe {
+                array.as_mut_ptr().add(i).write(fill(i));
+            }
+            if i == 0
+            {
+                break
+            }
+            i -= 1;
+        }
+    }
+    array
 }
 
 pub /*const*/ fn truncate<T, const N: usize, const M: usize>(array: [T; N]) -> [T; M]
@@ -2163,6 +2219,21 @@ impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
         F: /*~const*/ FnMut(usize) -> T + /*~const*/ Destruct
     {
         crate::rfill(&mut fill)
+    }
+    
+    #[cfg(feature = "std")]
+    fn fill_boxed<F>(mut fill: F) -> Box<Self>
+    where
+        F: /*~const*/ FnMut(usize) -> T + /*~const*/ Destruct
+    {
+        crate::fill_boxed(&mut fill)
+    }
+    #[cfg(feature = "std")]
+    fn rfill_boxed<F>(mut fill: F) -> Box<Self>
+    where
+        F: /*~const*/ FnMut(usize) -> T + /*~const*/ Destruct
+    {
+        crate::rfill_boxed(&mut fill)
     }
     
     /*fn for_each<F>(self, mut action: F) -> ()

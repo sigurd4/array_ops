@@ -1,4 +1,4 @@
-#![cfg_attr(not(test), no_std)]
+#![cfg_attr(not(any(feature = "std", test)), no_std)]
 
 #![feature(associated_type_defaults)]
 #![feature(const_trait_impl)]
@@ -17,6 +17,7 @@
 #![feature(const_maybe_uninit_assume_init)]
 #![feature(associated_const_equality)]
 #![feature(portable_simd)]
+#![cfg_attr(feature = "std", feature(new_uninit))]
 
 #![feature(const_closures)]
 #![feature(generic_const_exprs)]
