@@ -1,4 +1,4 @@
-use core::{borrow::{Borrow, BorrowMut}, marker::Destruct, mem::{ManuallyDrop, MaybeUninit}, ops::{Sub, AddAssign, Deref, DerefMut, Mul, Div, Add, Neg, MulAssign}};
+use core::{borrow::{Borrow, BorrowMut}, marker::Destruct, mem::{ManuallyDrop, MaybeUninit}, ops::{Sub, AddAssign, Deref, DerefMut, Mul, Div, Add, Neg, MulAssign}, simd::{LaneCount, Simd, SimdElement, SupportedLaneCount}};
 
 use array_trait::Array;
 
@@ -816,6 +816,63 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// The chunk length must be a factor of the array length, otherwise it will not compile.
     fn array_chunks_exact_mut<const M: usize>(&mut self) -> &mut [[T; M]; N / M]
     where
+        [(); 0 - N % M]:,
+        [(); N / M]:;
+
+    fn array_simd<const M: usize>(self) -> ([Simd<T, M>; N / M], [T; N % M])
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); N % M]:,
+        [(); N / M]:;
+    fn array_simd_ref<const M: usize>(&self) -> (&[Simd<T, M>; N / M], &[T; N % M])
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); N % M]:,
+        [(); N / M]:;
+    fn array_simd_mut<const M: usize>(&mut self) -> (&mut [Simd<T, M>; N / M], &mut [T; N % M])
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); N % M]:,
+        [(); N / M]:;
+    
+    fn array_rsimd<const M: usize>(self) -> ([T; N % M], [Simd<T, M>; N / M])
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); N % M]:,
+        [(); N / M]:;
+    fn array_rsimd_ref<const M: usize>(&self) -> (&[T; N % M], &[Simd<T, M>; N / M])
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); N % M]:,
+        [(); N / M]:;
+    fn array_rsimd_mut<const M: usize>(&mut self) -> (&mut [T; N % M], &mut [Simd<T, M>; N / M])
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); N % M]:,
+        [(); N / M]:;
+    
+    fn array_simd_exact<const M: usize>(self) -> [Simd<T, M>; N / M]
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); 0 - N % M]:,
+        [(); N / M]:;
+    fn array_simd_exact_ref<const M: usize>(&self) -> &[Simd<T, M>; N / M]
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); 0 - N % M]:,
+        [(); N / M]:;
+    fn array_simd_exact_mut<const M: usize>(&mut self) -> &mut [Simd<T, M>; N / M]
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
         [(); 0 - N % M]:,
         [(); N / M]:;
 
@@ -1929,6 +1986,82 @@ where
     unsafe {&mut *array.as_mut_ptr().cast()}
 }
 
+pub const fn array_simd<T, const N: usize, const M: usize>(array: [T; N]) -> ([Simd<T, M>; N / M], [T; N % M])
+where
+    T: SimdElement,
+    LaneCount<M>: SupportedLaneCount
+{
+    unsafe {private::split_transmute(array)}
+}
+pub const fn array_simd_ref<T, const N: usize, const M: usize>(array: &[T; N]) -> (&[Simd<T, M>; N / M], &[T; N % M])
+where
+    T: SimdElement,
+    LaneCount<M>: SupportedLaneCount
+{
+    let (ptr_left, ptr_right) = crate::rsplit_ptr(array, N % M);
+    unsafe {(&*ptr_left.cast(), &*ptr_right.cast())}
+}
+pub const fn array_simd_mut<T, const N: usize, const M: usize>(array: &mut [T; N]) -> (&mut [Simd<T, M>; N / M], &mut [T; N % M])
+where
+    T: SimdElement,
+    LaneCount<M>: SupportedLaneCount
+{
+    let (ptr_left, ptr_right) = crate::rsplit_mut_ptr(array, N % M);
+    unsafe {(&mut *ptr_left.cast(), &mut *ptr_right.cast())}
+}
+
+pub const fn array_rsimd<T, const N: usize, const M: usize>(array: [T; N]) -> ([T; N % M], [Simd<T, M>; N / M])
+where
+    T: SimdElement,
+    LaneCount<M>: SupportedLaneCount
+{
+    unsafe {private::split_transmute(array)}
+}
+pub const fn array_rsimd_ref<T, const N: usize, const M: usize>(array: &[T; N]) -> (&[T; N % M], &[Simd<T, M>; N / M])
+where
+    T: SimdElement,
+    LaneCount<M>: SupportedLaneCount
+{
+    let (ptr_left, ptr_right) = crate::split_ptr(array, N % M);
+    unsafe {(&*ptr_left.cast(), &*ptr_right.cast())}
+}
+pub const fn array_rsimd_mut<T, const N: usize, const M: usize>(array: &mut [T; N]) -> (&mut [T; N % M], &mut [Simd<T, M>; N / M])
+where
+    T: SimdElement,
+    LaneCount<M>: SupportedLaneCount
+{
+    let (ptr_left, ptr_right) = crate::split_mut_ptr(array, N % M);
+    unsafe {(&mut *ptr_left.cast(), &mut *ptr_right.cast())}
+}
+
+pub const fn array_simd_exact<T, const N: usize, const M: usize>(array: [T; N]) -> [Simd<T, M>; N / M]
+where
+    T: SimdElement,
+    LaneCount<M>: SupportedLaneCount,
+    [(); 0 - N % M]:,
+    [(); N / M]:
+{
+    unsafe {private::transmute_unchecked_size(array)}
+}
+pub const fn array_simd_exact_ref<T, const N: usize, const M: usize>(array: &[T; N]) -> &[Simd<T, M>; N / M]
+where
+    T: SimdElement,
+    LaneCount<M>: SupportedLaneCount,
+    [(); 0 - N % M]:,
+    [(); N / M]:
+{
+    unsafe {&*array.as_ptr().cast()}
+}
+pub const fn array_simd_exact_mut<T, const N: usize, const M: usize>(array: &mut [T; N]) -> &mut [Simd<T, M>; N / M]
+where
+    T: SimdElement,
+    LaneCount<M>: SupportedLaneCount,
+    [(); 0 - N % M]:,
+    [(); N / M]:
+{
+    unsafe {&mut *array.as_mut_ptr().cast()}
+}
+
 pub const fn split_array<T, const N: usize, const M: usize>(array: [T; N]) -> ([T; M], [T; N - M])
 where
     [(); N - M]:
@@ -2644,6 +2777,90 @@ impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
         [(); N / M]:
     {
         crate::array_chunks_exact_mut(self)
+    }
+    
+    fn array_simd<const M: usize>(self) -> ([Simd<T, M>; N / M], [T; N % M])
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); N % M]:,
+        [(); N / M]:
+    {
+        crate::array_simd(self)
+    }
+    fn array_simd_ref<const M: usize>(&self) -> (&[Simd<T, M>; N / M], &[T; N % M])
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); N % M]:,
+        [(); N / M]:
+    {
+        crate::array_simd_ref(self)
+    }
+    fn array_simd_mut<const M: usize>(&mut self) -> (&mut [Simd<T, M>; N / M], &mut [T; N % M])
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); N % M]:,
+        [(); N / M]:
+    {
+        crate::array_simd_mut(self)
+    }
+    
+    fn array_rsimd<const M: usize>(self) -> ([T; N % M], [Simd<T, M>; N / M])
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); N % M]:,
+        [(); N / M]:
+    {
+        crate::array_rsimd(self)
+    }
+    fn array_rsimd_ref<const M: usize>(&self) -> (&[T; N % M], &[Simd<T, M>; N / M])
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); N % M]:,
+        [(); N / M]:
+    {
+        crate::array_rsimd_ref(self)
+    }
+    fn array_rsimd_mut<const M: usize>(&mut self) -> (&mut [T; N % M], &mut [Simd<T, M>; N / M])
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); N % M]:,
+        [(); N / M]:
+    {
+        crate::array_rsimd_mut(self)
+    }
+    
+    fn array_simd_exact<const M: usize>(self) -> [Simd<T, M>; N / M]
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); 0 - N % M]:,
+        [(); N / M]:
+    {
+        crate::array_simd_exact(self)
+    }
+    fn array_simd_exact_ref<const M: usize>(&self) -> &[Simd<T, M>; N / M]
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); 0 - N % M]:,
+        [(); N / M]:
+    {
+        crate::array_simd_exact_ref(self)
+    }
+    fn array_simd_exact_mut<const M: usize>(&mut self) -> &mut [Simd<T, M>; N / M]
+    where
+        T: SimdElement,
+        LaneCount<M>: SupportedLaneCount,
+        [(); 0 - N % M]:,
+        [(); N / M]:
+    {
+        crate::array_simd_exact_mut(self)
     }
     
     fn split_array<const M: usize>(self) -> ([T; M], [T; N - M])

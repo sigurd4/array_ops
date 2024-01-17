@@ -16,6 +16,7 @@
 #![feature(const_ptr_write)]
 #![feature(const_maybe_uninit_assume_init)]
 #![feature(associated_const_equality)]
+#![feature(portable_simd)]
 
 #![feature(const_closures)]
 #![feature(generic_const_exprs)]
@@ -25,6 +26,7 @@ moddef::moddef!(
         array_2d_ops,
         array_nd_ops,
         array_ops,
+        array_simd_ops,
         padded,
         //partitioned_array,
         //partitioned_array_ops
