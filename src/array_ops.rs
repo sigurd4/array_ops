@@ -914,6 +914,19 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
 
     fn each_ref2(&self) -> [&T; N];
     fn each_mut2(&mut self) -> [&mut T; N];
+    
+
+    /// Performs the bit-reverse permutation. Length must be a power of 2.
+    /// 
+    /// # Example
+    /// ```rust
+    /// let mut arr = [0b000, 0b001, 0b010, 0b011, 0b100, 0b101, 0b110, 0b111];
+    /// arr.bit_reverse_permutation();
+    /// assert_eq!(arr, [0b000, 0b100, 0b010, 0b110, 0b001, 0b101, 0b011, 0b111])
+    /// ```
+    fn bit_reverse_permutation(&mut self)
+    where
+        [(); N.is_power_of_two() as usize - 1]:;
 }
 
 pub const fn split_ptr<T, const N: usize>(array: &[T; N], mid: usize) -> (*const T, *const T)
@@ -2178,6 +2191,24 @@ pub /*const*/ fn each_mut<T, const N: usize>(array: &mut [T; N]) -> [&mut T; N]
     })
 }
 
+pub const fn bit_reverse_permutation<T, const N: usize>(array: &mut [T; N])
+where
+    [(); N.is_power_of_two() as usize - 1]:
+{
+    let mut i = 0;
+    while i < N/2
+    {
+        let j = i.reverse_bits() >> (N.leading_zeros() + 1);
+        if i != j
+        {
+            unsafe {
+                core::ptr::swap_nonoverlapping(array.as_mut_ptr().add(i), array.as_mut_ptr().add(j), 1);
+            }
+        }
+        i += 1;
+    }
+}
+
 impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
 {
     //type Array<I, const M: usize> = [I; M];
@@ -2980,5 +3011,12 @@ impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
     fn each_mut2(&mut self) -> [&mut T; N]
     {
         crate::each_mut(self)
+    }
+    
+    fn bit_reverse_permutation(&mut self)
+    where
+        [(); N.is_power_of_two() as usize - 1]:
+    {
+        crate::bit_reverse_permutation(self)
     }
 }

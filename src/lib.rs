@@ -17,6 +17,7 @@
 #![feature(const_maybe_uninit_assume_init)]
 #![feature(associated_const_equality)]
 #![feature(portable_simd)]
+#![feature(const_swap)]
 #![cfg_attr(feature = "std", feature(new_uninit))]
 
 #![feature(const_closures)]
