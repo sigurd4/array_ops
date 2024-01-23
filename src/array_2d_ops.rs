@@ -16,7 +16,7 @@ pub trait Array2dOps<T, const M: usize, const N: usize>: ArrayOps<[T; N], M>
     /// # Example
     /// 
     /// ```rust
-    /// use array_trait::*;
+    /// use array__ops::*;
     /// 
     /// let matrix: [[u8; 5]; 3] = [
     ///     [1,   2,  3,  4,  5],

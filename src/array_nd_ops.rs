@@ -23,7 +23,7 @@ pub trait ArrayNdOps<const D: usize, T, const L: usize>: Array + ArrayNd<D, Item
     /// #![feature(const_closures)]
     /// #![feature(const_mut_refs)]
     /// 
-    /// use array_trait::ArrayNdOps;
+    /// use array__ops::*;
     /// 
     /// type T = u8;
     /// 
@@ -49,7 +49,7 @@ pub trait ArrayNdOps<const D: usize, T, const L: usize>: Array + ArrayNd<D, Item
     /// #![feature(const_closures)]
     /// #![feature(const_mut_refs)]
     /// 
-    /// use array_trait::ArrayNdOps;
+    /// use array__ops::*;
     /// 
     /// const ND: [[u8; 3]; 3] = [
     ///     [1, 2, 3],
@@ -80,7 +80,7 @@ pub trait ArrayNdOps<const D: usize, T, const L: usize>: Array + ArrayNd<D, Item
     /// #![feature(const_mut_refs)]
     /// #![feature(generic_arg_infer)]
     /// 
-    /// use array_trait::ArrayNdOps;
+    /// use array__ops::*;
     /// 
     /// type T = u8;
     /// 
@@ -109,7 +109,7 @@ pub trait ArrayNdOps<const D: usize, T, const L: usize>: Array + ArrayNd<D, Item
     /// #![feature(generic_const_exprs)]
     /// #![feature(const_trait_impl)]
     /// 
-    /// use array_trait::ArrayNdOps;
+    /// use array__ops::*;
     /// 
     /// type T = u8;
     /// 
@@ -133,7 +133,7 @@ pub trait ArrayNdOps<const D: usize, T, const L: usize>: Array + ArrayNd<D, Item
     /// #![feature(generic_const_exprs)]
     /// #![feature(const_trait_impl)]
     /// 
-    /// use array_trait::ArrayNdOps;
+    /// use array__ops::*;
     /// 
     /// type T = u8;
     /// 
@@ -156,7 +156,7 @@ pub trait ArrayNdOps<const D: usize, T, const L: usize>: Array + ArrayNd<D, Item
     /// ```rust
     /// #![feature(generic_const_exprs)]
     /// 
-    /// use array_trait::ArrayNdOps;
+    /// use array__ops::*;
     /// 
     /// type T = u8;
     /// 
@@ -192,7 +192,7 @@ pub trait ArrayNdOps<const D: usize, T, const L: usize>: Array + ArrayNd<D, Item
     /// ```rust
     /// #![feature(generic_const_exprs)]
     /// 
-    /// use array_trait::ArrayNdOps;
+    /// use array__ops::*;
     /// 
     /// const A: [[(u8, u8); 3]; 2] = [
     ///     [(0, 0), (0, 1), (0, 2)],
@@ -219,7 +219,7 @@ pub trait ArrayNdOps<const D: usize, T, const L: usize>: Array + ArrayNd<D, Item
     /// #![feature(generic_const_exprs)]
     /// #![feature(const_mut_refs)]
     /// 
-    /// use array_trait::ArrayNdOps;
+    /// use array__ops::*;
     /// 
     /// const A: [[u8; 2]; 3] = [
     ///     [1, 2],
@@ -247,7 +247,7 @@ pub trait ArrayNdOps<const D: usize, T, const L: usize>: Array + ArrayNd<D, Item
     /// #![feature(generic_const_exprs)]
     /// #![feature(const_mut_refs)]
     /// 
-    /// use array_trait::ArrayNdOps;
+    /// use array__ops::*;
     /// 
     /// const A: [[u8; 2]; 3] = [
     ///     [1, 2],
