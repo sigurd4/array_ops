@@ -28,7 +28,6 @@ moddef::moddef!(
         array_nd_ops,
         array_ops,
         array_simd_ops,
-        padded,
         //partitioned_array,
         //partitioned_array_ops
     },
@@ -66,6 +65,7 @@ mod tests {
     use std::time::SystemTime;
 
     use array_trait::ArrayNd;
+    use slice_ops::Padded;
 
     use super::*;
 
