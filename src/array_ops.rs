@@ -1530,6 +1530,27 @@ where
         }
         i += 1;
     }
+    
+    // Gold-Rader algorithm
+    /*let mut k = N/2;
+    let mut i = 0;
+    let mut j = 0;
+    while i < N - 2
+    {
+        if i < j
+        {
+            unsafe {
+                core::ptr::swap_nonoverlapping(array.as_mut_ptr().add(i), array.as_mut_ptr().add(j), 1);
+            }
+        }
+        while k <= j
+        {
+            j -= k;
+            k /= 2;
+        }
+        j += k;
+        i += 1;
+    }*/
 }
 
 impl<T, const N: usize> ArrayOps<T, N> for [T; N]
