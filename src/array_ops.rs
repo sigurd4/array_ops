@@ -604,7 +604,7 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// 
     /// let array = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
     /// 
-    /// let (zero, [odd, even]) = array.array_rspread_ref::<2>();
+    /// let (zero, [odd, even]) = array.rspread_ref::<2>();
     /// 
     /// assert_eq!(*zero, [0]);
     /// assert_eq!(odd.each_ref().map(|padding| **padding), [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]);
@@ -629,7 +629,7 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// 
     /// let mut array = ["the", "beat", "goes", "1", "2", "3", "4", "5", "6", "7", "8"];
     /// 
-    /// let (start, [boots, n, cats, and]) = array.array_rspread_mut::<4>();
+    /// let (start, [boots, n, cats, and]) = array.rspread_mut::<4>();
     /// 
     /// for boots in boots
     /// {
@@ -1291,7 +1291,7 @@ where
     (crate::transpose(spread_t), rest)
 }
 
-pub const fn array_rspread<T, const N: usize, const M: usize>(array: [T; N]) -> ([T; N % M], [[T; N / M]; M])
+pub const fn rspread<T, const N: usize, const M: usize>(array: [T; N]) -> ([T; N % M], [[T; N / M]; M])
 where
     [(); M - 1]:,
     [(); N % M]:,
@@ -1446,7 +1446,7 @@ fn bench()
     const N: usize = 1 << 10;
     let mut a: [usize; N] = ArrayOps::fill(|i| i);
     let t0 = SystemTime::now();
-    for _ in 0..1000000
+    for _ in 0..1000
     {
         a.bit_reverse_permutation();
     }
@@ -2694,7 +2694,7 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
         [(); N % M]:,
         [(); N / M]:
     {
-        crate::array_rspread(self)
+        crate::rspread(self)
     }
     fn rspread_ref<const M: usize>(&self) -> (&[T; N % M], [&[Padded<T, M>; N / M]; M])
     where
