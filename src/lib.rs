@@ -18,6 +18,7 @@
 #![feature(associated_const_equality)]
 #![feature(portable_simd)]
 #![feature(const_swap)]
+#![feature(allocator_api)]
 #![cfg_attr(feature = "std", feature(new_uninit))]
 
 #![feature(const_closures)]
@@ -37,6 +38,10 @@ moddef::moddef!(
 
 pub use array_trait::*;
 pub use slice_ops;
+pub use slice_ops::Padded;
+pub use slice_ops::Slice;
+pub use slice_ops::SliceOps;
+pub use slice_ops::SlicePrereq;
 
 pub const fn min_len(a: usize, b: usize) -> usize
 {

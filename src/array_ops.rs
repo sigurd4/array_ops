@@ -1,4 +1,4 @@
-use core::{borrow::{Borrow, BorrowMut}, marker::Destruct, mem::{ManuallyDrop, MaybeUninit}, ops::{Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign}, simd::{LaneCount, Simd, SimdElement, SupportedLaneCount}};
+use core::{borrow::{Borrow, BorrowMut}, alloc::Allocator, marker::Destruct, mem::{ManuallyDrop, MaybeUninit}, ops::{Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign}, simd::{LaneCount, Simd, SimdElement, SupportedLaneCount}};
 
 use array_trait::Array;
 use slice_ops::Padded;
@@ -34,6 +34,17 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     fn rfill_boxed<F>(fill: F) -> Box<Self>
     where
         F: FnMut(usize) -> T + ~const Destruct;
+        
+    #[cfg(feature = "std")]
+    fn fill_boxed_in<F, A>(fill: F, alloc: A) -> Box<Self, A>
+    where
+        F: FnMut(usize) -> T + ~const Destruct,
+        A: Allocator;
+    #[cfg(feature = "std")]
+    fn rfill_boxed_in<F, A>(fill: F, alloc: A) -> Box<Self, A>
+    where
+        F: FnMut(usize) -> T + ~const Destruct,
+        A: Allocator;
 
     fn truncate<const M: usize>(self) -> [T; M]
     where
@@ -881,18 +892,6 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
         LaneCount<M>: SupportedLaneCount,
         [(); N % M]:,
         [(); N / M]:;
-    fn array_simd_ref<const M: usize>(&self) -> (&[Simd<T, M>; N / M], &[T; N % M])
-    where
-        T: SimdElement,
-        LaneCount<M>: SupportedLaneCount,
-        [(); N % M]:,
-        [(); N / M]:;
-    fn array_simd_mut<const M: usize>(&mut self) -> (&mut [Simd<T, M>; N / M], &mut [T; N % M])
-    where
-        T: SimdElement,
-        LaneCount<M>: SupportedLaneCount,
-        [(); N % M]:,
-        [(); N / M]:;
     
     fn array_rsimd<const M: usize>(self) -> ([T; N % M], [Simd<T, M>; N / M])
     where
@@ -900,32 +899,8 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
         LaneCount<M>: SupportedLaneCount,
         [(); N % M]:,
         [(); N / M]:;
-    fn array_rsimd_ref<const M: usize>(&self) -> (&[T; N % M], &[Simd<T, M>; N / M])
-    where
-        T: SimdElement,
-        LaneCount<M>: SupportedLaneCount,
-        [(); N % M]:,
-        [(); N / M]:;
-    fn array_rsimd_mut<const M: usize>(&mut self) -> (&mut [T; N % M], &mut [Simd<T, M>; N / M])
-    where
-        T: SimdElement,
-        LaneCount<M>: SupportedLaneCount,
-        [(); N % M]:,
-        [(); N / M]:;
     
     fn array_simd_exact<const M: usize>(self) -> [Simd<T, M>; N / M]
-    where
-        T: SimdElement,
-        LaneCount<M>: SupportedLaneCount,
-        [(); 0 - N % M]:,
-        [(); N / M]:;
-    fn array_simd_exact_ref<const M: usize>(&self) -> &[Simd<T, M>; N / M]
-    where
-        T: SimdElement,
-        LaneCount<M>: SupportedLaneCount,
-        [(); 0 - N % M]:,
-        [(); N / M]:;
-    fn array_simd_exact_mut<const M: usize>(&mut self) -> &mut [Simd<T, M>; N / M]
     where
         T: SimdElement,
         LaneCount<M>: SupportedLaneCount,
@@ -961,7 +936,6 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     fn each_ref2(&self) -> [&T; N];
     fn each_mut2(&mut self) -> [&mut T; N];
     
-
     /// Performs the bit-reverse permutation. Length must be a power of 2.
     /// 
     /// # Example
@@ -1403,22 +1377,6 @@ where
 {
     unsafe {private::split_transmute(array)}
 }
-pub const fn array_simd_ref<T, const N: usize, const M: usize>(array: &[T; N]) -> (&[Simd<T, M>; N / M], &[T; N % M])
-where
-    T: SimdElement,
-    LaneCount<M>: SupportedLaneCount
-{
-    let (ptr_left, ptr_right) = crate::rsplit_ptr(array, N % M);
-    unsafe {(&*ptr_left.cast(), &*ptr_right.cast())}
-}
-pub const fn array_simd_mut<T, const N: usize, const M: usize>(array: &mut [T; N]) -> (&mut [Simd<T, M>; N / M], &mut [T; N % M])
-where
-    T: SimdElement,
-    LaneCount<M>: SupportedLaneCount
-{
-    let (ptr_left, ptr_right) = crate::rsplit_mut_ptr(array, N % M);
-    unsafe {(&mut *ptr_left.cast(), &mut *ptr_right.cast())}
-}
 
 pub const fn array_rsimd<T, const N: usize, const M: usize>(array: [T; N]) -> ([T; N % M], [Simd<T, M>; N / M])
 where
@@ -1426,22 +1384,6 @@ where
     LaneCount<M>: SupportedLaneCount
 {
     unsafe {private::split_transmute(array)}
-}
-pub const fn array_rsimd_ref<T, const N: usize, const M: usize>(array: &[T; N]) -> (&[T; N % M], &[Simd<T, M>; N / M])
-where
-    T: SimdElement,
-    LaneCount<M>: SupportedLaneCount
-{
-    let (ptr_left, ptr_right) = crate::split_ptr(array, N % M);
-    unsafe {(&*ptr_left.cast(), &*ptr_right.cast())}
-}
-pub const fn array_rsimd_mut<T, const N: usize, const M: usize>(array: &mut [T; N]) -> (&mut [T; N % M], &mut [Simd<T, M>; N / M])
-where
-    T: SimdElement,
-    LaneCount<M>: SupportedLaneCount
-{
-    let (ptr_left, ptr_right) = crate::split_mut_ptr(array, N % M);
-    unsafe {(&mut *ptr_left.cast(), &mut *ptr_right.cast())}
 }
 
 pub const fn array_simd_exact<T, const N: usize, const M: usize>(array: [T; N]) -> [Simd<T, M>; N / M]
@@ -1452,24 +1394,6 @@ where
     [(); N / M]:
 {
     unsafe {private::transmute_unchecked_size(array)}
-}
-pub const fn array_simd_exact_ref<T, const N: usize, const M: usize>(array: &[T; N]) -> &[Simd<T, M>; N / M]
-where
-    T: SimdElement,
-    LaneCount<M>: SupportedLaneCount,
-    [(); 0 - N % M]:,
-    [(); N / M]:
-{
-    unsafe {&*array.as_ptr().cast()}
-}
-pub const fn array_simd_exact_mut<T, const N: usize, const M: usize>(array: &mut [T; N]) -> &mut [Simd<T, M>; N / M]
-where
-    T: SimdElement,
-    LaneCount<M>: SupportedLaneCount,
-    [(); 0 - N % M]:,
-    [(); N / M]:
-{
-    unsafe {&mut *array.as_mut_ptr().cast()}
 }
 
 pub const fn split_array<T, const N: usize, const M: usize>(array: [T; N]) -> ([T; M], [T; N - M])
@@ -1514,6 +1438,24 @@ where
     unsafe {(&mut *ptr_left.cast(), &mut *ptr_right.cast())}
 }
 
+#[test]
+fn bench()
+{
+    use std::time::SystemTime;
+
+    const N: usize = 1 << 10;
+    let mut a: [usize; N] = ArrayOps::fill(|i| i);
+    let t0 = SystemTime::now();
+    for _ in 0..1000000
+    {
+        a.bit_reverse_permutation();
+    }
+    let dt = SystemTime::now().duration_since(t0);
+
+    // 8.8810513s
+    println!("{:?}", dt);
+}
+
 pub const fn bit_reverse_permutation<T, const N: usize>(array: &mut [T; N])
 where
     [(); N.is_power_of_two() as usize - 1]:
@@ -1530,27 +1472,6 @@ where
         }
         i += 1;
     }
-    
-    // Gold-Rader algorithm
-    /*let mut k = N/2;
-    let mut i = 0;
-    let mut j = 0;
-    while i < N - 2
-    {
-        if i < j
-        {
-            unsafe {
-                core::ptr::swap_nonoverlapping(array.as_mut_ptr().add(i), array.as_mut_ptr().add(j), 1);
-            }
-        }
-        while k <= j
-        {
-            j -= k;
-            k /= 2;
-        }
-        j += k;
-        i += 1;
-    }*/
 }
 
 impl<T, const N: usize> ArrayOps<T, N> for [T; N]
@@ -1628,7 +1549,7 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
             array.assume_init()
         };
         let mut i = 0;
-        while i != N
+        while i < N
         {
             unsafe {
                 array.as_mut_ptr().add(i).write(fill(i));
@@ -1664,33 +1585,53 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
         array
     }
     
-    /*fn for_each<F>(self, mut action: F) -> ()
+    #[cfg(feature = "std")]
+    fn fill_boxed_in<F, A>(mut fill: F, alloc: A) -> Box<Self, A>
     where
-        F: FnMut(T) -> () + Destruct
+        F: FnMut(usize) -> T + Destruct,
+        A: Allocator
     {
-        self.for_each_ref(|x| action(unsafe {(x as *const T).read()}));
-        core::mem::forget(self)
-    }
-    fn for_each_ref<F>(&self, mut action: F) -> ()
-    where
-        F: FnMut(&T) -> () + Destruct
-    {
-        let mut iter = self.const_iter();
-        while let Some(next) = iter.next()
+        let array = Box::new_uninit_in(alloc);
+        let mut array: Box<[T; N], A> = unsafe {
+            array.assume_init()
+        };
+        let mut i = 0;
+        while i < N
         {
-            action(next);
+            unsafe {
+                array.as_mut_ptr().add(i).write(fill(i));
+            }
+            i += 1;
         }
+        array
     }
-    fn for_each_mut<F>(&mut self, mut action: F) -> ()
+    #[cfg(feature = "std")]
+    fn rfill_boxed_in<F, A>(mut fill: F, alloc: A) -> Box<Self, A>
     where
-        F: FnMut(&mut T) -> () + Destruct
+        F: FnMut(usize) -> T + Destruct,
+        A: Allocator
     {
-        let mut iter = self.const_iter_mut();
-        while let Some(next) = iter.next()
+        let array = Box::new_uninit_in(alloc);
+        let mut array: Box<[T; N], A> = unsafe {
+            array.assume_init()
+        };
+        if N != 0
         {
-            action(next);
+            let mut i = N - 1;
+            loop
+            {
+                unsafe {
+                    array.as_mut_ptr().add(i).write(fill(i));
+                }
+                if i == 0
+                {
+                    break
+                }
+                i -= 1;
+            }
         }
-    }*/
+        array
+    }
     
     fn truncate<const M: usize>(self) -> [T; M]
     where
@@ -2863,24 +2804,6 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
     {
         crate::array_simd(self)
     }
-    fn array_simd_ref<const M: usize>(&self) -> (&[Simd<T, M>; N / M], &[T; N % M])
-    where
-        T: SimdElement,
-        LaneCount<M>: SupportedLaneCount,
-        [(); N % M]:,
-        [(); N / M]:
-    {
-        crate::array_simd_ref(self)
-    }
-    fn array_simd_mut<const M: usize>(&mut self) -> (&mut [Simd<T, M>; N / M], &mut [T; N % M])
-    where
-        T: SimdElement,
-        LaneCount<M>: SupportedLaneCount,
-        [(); N % M]:,
-        [(); N / M]:
-    {
-        crate::array_simd_mut(self)
-    }
     
     fn array_rsimd<const M: usize>(self) -> ([T; N % M], [Simd<T, M>; N / M])
     where
@@ -2891,24 +2814,6 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
     {
         crate::array_rsimd(self)
     }
-    fn array_rsimd_ref<const M: usize>(&self) -> (&[T; N % M], &[Simd<T, M>; N / M])
-    where
-        T: SimdElement,
-        LaneCount<M>: SupportedLaneCount,
-        [(); N % M]:,
-        [(); N / M]:
-    {
-        crate::array_rsimd_ref(self)
-    }
-    fn array_rsimd_mut<const M: usize>(&mut self) -> (&mut [T; N % M], &mut [Simd<T, M>; N / M])
-    where
-        T: SimdElement,
-        LaneCount<M>: SupportedLaneCount,
-        [(); N % M]:,
-        [(); N / M]:
-    {
-        crate::array_rsimd_mut(self)
-    }
     
     fn array_simd_exact<const M: usize>(self) -> [Simd<T, M>; N / M]
     where
@@ -2918,24 +2823,6 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
         [(); N / M]:
     {
         crate::array_simd_exact(self)
-    }
-    fn array_simd_exact_ref<const M: usize>(&self) -> &[Simd<T, M>; N / M]
-    where
-        T: SimdElement,
-        LaneCount<M>: SupportedLaneCount,
-        [(); 0 - N % M]:,
-        [(); N / M]:
-    {
-        crate::array_simd_exact_ref(self)
-    }
-    fn array_simd_exact_mut<const M: usize>(&mut self) -> &mut [Simd<T, M>; N / M]
-    where
-        T: SimdElement,
-        LaneCount<M>: SupportedLaneCount,
-        [(); 0 - N % M]:,
-        [(); N / M]:
-    {
-        crate::array_simd_exact_mut(self)
     }
     
     fn split_array<const M: usize>(self) -> ([T; M], [T; N - M])

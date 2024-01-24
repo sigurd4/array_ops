@@ -33,6 +33,11 @@ pub trait Array2dOps<T, const M: usize, const N: usize>: ArrayOps<[T; N], M>
     /// ]);
     /// ```
     fn transpose(self) -> Self::Transposed;
+    
+    fn mul_kronecker<Rhs, const H: usize, const W: usize>(&self, rhs: &[[Rhs; W]; H]) -> [[<T as Mul<Rhs>>::Output; W*N]; H*N]
+    where
+        T: Mul<Rhs> + Copy,
+        Rhs: Copy;
 
     fn into_diagonal(self) -> [T; crate::min_len(M, N)]
     where
@@ -71,37 +76,6 @@ pub const fn transpose<T, const M: usize, const N: usize>(matrix: [[T; N]; M]) -
     }))*/
 }
 
-pub /*const*/ fn into_diagonal<T, const M: usize, const N: usize>(array: [[T; N]; M]) -> [T; crate::min_len(M, N)]
-where
-    T: /*~const*/ Destruct
-{
-    let mut dst: [T; crate::min_len(M, N)] = unsafe {private::uninit()};
-    
-    let mut m = 0;
-    while m != M
-    {
-        let mut n = 0;
-        while n != N
-        {
-            unsafe {
-                let src = array[m].as_ptr().add(n);
-                if m == n
-                {
-                    core::ptr::copy_nonoverlapping(src, dst.as_mut_ptr().add(n), 1)
-                }
-                else
-                {
-                    let _ = core::ptr::read(src);
-                }
-            }
-            n += 1;
-        }
-        m += 1;
-    }
-    core::mem::forget(array);
-
-    dst
-}
 pub const fn diagonal_ref<T, const M: usize, const N: usize>(array: &[[T; N]; M]) -> [&T; crate::min_len(M, N)]
 {
     let mut dst: [&T; crate::min_len(M, N)] = unsafe {private::uninit()};
@@ -138,11 +112,44 @@ impl<T, const M: usize, const N: usize> Array2dOps<T, M, N> for [[T; N]; M]
         crate::transpose(self)
     }
     
+    fn mul_kronecker<Rhs, const H: usize, const W: usize>(&self, rhs: &[[Rhs; W]; H]) -> [[<T as Mul<Rhs>>::Output; W*N]; H*N]
+    where
+        T: Mul<Rhs> + Copy,
+        Rhs: Copy
+    {
+        ArrayOps::fill(|r| ArrayOps::fill(|c| self[r % M][c % N]*rhs[r / M][c / N]))
+    }
+    
     fn into_diagonal(self) -> [T; crate::min_len(M, N)]
     where
         T: /*~const*/ Destruct
     {
-        crate::into_diagonal(self)
+        let mut dst: [T; crate::min_len(M, N)] = unsafe {private::uninit()};
+        
+        let mut m = 0;
+        while m != M
+        {
+            let mut n = 0;
+            while n != N
+            {
+                unsafe {
+                    let src = self[m].as_ptr().add(n);
+                    if m == n
+                    {
+                        core::ptr::copy_nonoverlapping(src, dst.as_mut_ptr().add(n), 1)
+                    }
+                    else
+                    {
+                        let _ = core::ptr::read(src);
+                    }
+                }
+                n += 1;
+            }
+            m += 1;
+        }
+        core::mem::forget(self);
+    
+        dst
     }
     fn diagonal_ref(&self) -> [&T; crate::min_len(M, N)]
     {
