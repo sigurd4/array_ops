@@ -817,17 +817,17 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
         [(); N / M]:;
     
     /// Divides a mutable array-slice into chunks, then yielding the leftmost rest in a separate mutable array-slice.
-    fn array_rchunks<const M: usize>(self) -> ([T; N % M], [[T; M]; N / M])
+    fn rchunks<const M: usize>(self) -> ([T; N % M], [[T; M]; N / M])
     where
         [(); N % M]:,
         [(); N / M]:;
     /// Divides an array-slice into chunks, then yielding the leftmost rest in a separate array-slice.
-    fn array_rchunks_ref<const M: usize>(&self) -> (&[T; N % M], &[[T; M]; N / M])
+    fn rchunks_ref<const M: usize>(&self) -> (&[T; N % M], &[[T; M]; N / M])
     where
         [(); N % M]:,
         [(); N / M]:;
     /// Divides a mutable array-slice into chunks, then yielding the leftmost rest in a separate array-slice.
-    fn array_rchunks_mut<const M: usize>(&mut self) -> (&mut [T; N % M], &mut [[T; M]; N / M])
+    fn rchunks_mut<const M: usize>(&mut self) -> (&mut [T; N % M], &mut [[T; M]; N / M])
     where
         [(); N % M]:,
         [(); N / M]:;
@@ -1297,7 +1297,7 @@ where
     [(); N % M]:,
     [(); N / M]:
 {
-    let split = crate::array_rchunks(array);
+    let split = crate::rchunks(array);
     
     let start = unsafe {core::ptr::read(&split.0 as *const [T; _])};
     let spread_t = unsafe {core::ptr::read(&split.1 as *const [[T; _]; _])};
@@ -1333,16 +1333,16 @@ pub const fn chunks_mut<T, const N: usize, const M: usize>(array: &mut [T; N]) -
     unsafe {(&mut *ptr_left.cast(), &mut *ptr_right.cast())}
 }
 
-pub const fn array_rchunks<T, const N: usize, const M: usize>(array: [T; N]) -> ([T; N % M], [[T; M]; N / M])
+pub const fn rchunks<T, const N: usize, const M: usize>(array: [T; N]) -> ([T; N % M], [[T; M]; N / M])
 {
     unsafe {private::split_transmute(array)}
 }
-pub const fn array_rchunks_ref<T, const N: usize, const M: usize>(array: &[T; N]) -> (&[T; N % M], &[[T; M]; N / M])
+pub const fn rchunks_ref<T, const N: usize, const M: usize>(array: &[T; N]) -> (&[T; N % M], &[[T; M]; N / M])
 {
     let (ptr_left, ptr_right) = crate::split_ptr(array, N % M);
     unsafe {(&*ptr_left.cast(), &*ptr_right.cast())}
 }
-pub const fn array_rchunks_mut<T, const N: usize, const M: usize>(array: &mut [T; N]) -> (&mut [T; N % M], &mut [[T; M]; N / M])
+pub const fn rchunks_mut<T, const N: usize, const M: usize>(array: &mut [T; N]) -> (&mut [T; N % M], &mut [[T; M]; N / M])
 {
     let (ptr_left, ptr_right) = crate::split_mut_ptr(array, N % M);
     unsafe {(&mut *ptr_left.cast(), &mut *ptr_right.cast())}
@@ -2760,17 +2760,17 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
         crate::chunks_mut(self)
     }
 
-    fn array_rchunks<const M: usize>(self) -> ([T; N % M], [[T; M]; N / M])
+    fn rchunks<const M: usize>(self) -> ([T; N % M], [[T; M]; N / M])
     {
-        crate::array_rchunks(self)
+        crate::rchunks(self)
     }
-    fn array_rchunks_ref<const M: usize>(&self) -> (&[T; N % M], &[[T; M]; N / M])
+    fn rchunks_ref<const M: usize>(&self) -> (&[T; N % M], &[[T; M]; N / M])
     {
-        crate::array_rchunks_ref(self)
+        crate::rchunks_ref(self)
     }
-    fn array_rchunks_mut<const M: usize>(&mut self) -> (&mut [T; N % M], &mut [[T; M]; N / M])
+    fn rchunks_mut<const M: usize>(&mut self) -> (&mut [T; N % M], &mut [[T; M]; N / M])
     {
-        crate::array_rchunks_mut(self)
+        crate::rchunks_mut(self)
     }
     
     fn chunks_exact<const M: usize>(self) -> [[T; M]; N / M]
