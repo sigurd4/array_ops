@@ -79,7 +79,7 @@ mod tests {
     fn mod0()
     {
         let a = [1, 2, 3];
-        let c = a.array_chunks_exact::<1>();
+        let c = a.chunks_exact::<1>();
         println!("{:?}", c);
     }
 
@@ -223,11 +223,11 @@ mod tests {
         println!("Alignment padded x3 String = {}", core::mem::align_of::<Padded<String, 3>>());
 
         println!("str: {:?}", str);
-        println!("spread: {:?}", str.array_spread_ref::<3>());
-        println!("chunks: {:?}", str.array_chunks_ref::<3>());
+        println!("spread: {:?}", str.spread_ref::<3>());
+        println!("chunks: {:?}", str.chunks_ref::<3>());
 
         assert_eq!(
-            str.array_spread::<3>(),
+            str.spread::<3>(),
             (
                 [
                     ['a', 'd', 'g', 'j', 'm', 'p', 's', 'v'],
@@ -238,7 +238,7 @@ mod tests {
             )
         );
         assert_eq!(
-            str.array_chunks::<3>(),
+            str.chunks::<3>(),
             (
                 [
                     ['a', 'b', 'c'],
