@@ -138,6 +138,9 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     fn flat_map<Map, O, const M: usize>(self, map: Map) -> [O; N*M]
     where
         Map: FnMut<(T,), Output = [O; M]> + ~const Destruct;
+    fn map_assign<Map>(&mut self, map: Map)
+    where
+        Map: FnMut(T) -> T + ~const Destruct;
 
     /// Combines two arrays with possibly different items into parallel, where each element lines up in the same position.
     /// 
@@ -1923,6 +1926,21 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
             private::transmute_unchecked_size(mapped)
         }
     }
+    fn map_assign<Map>(&mut self, mut map: Map)
+    where
+        Map: FnMut(T) -> T + Destruct
+    {
+        let mut i = 0;
+        while i < N
+        {
+            unsafe {
+                let ptr = self.as_mut_ptr().add(i);
+                let x = ptr.read();
+                ptr.write(map(x))
+            }
+            i += 1;
+        }
+    }
     
     fn zip<Z>(self, other: [Z; N]) -> [(T, Z); N]
     {
@@ -2367,16 +2385,7 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
     where
         T: Neg<Output = T>
     {
-        let mut i = 0;
-        while i < N
-        {
-            unsafe {
-                let ptr = self.as_mut_ptr().add(i);
-                let x = ptr.read();
-                ptr.write(-x)
-            }
-            i += 1;
-        }
+        self.map_assign(|x| -x)
     }
     
     fn add_each<Rhs>(self, rhs: [Rhs; N]) -> [<T as Add<Rhs>>::Output; N]
