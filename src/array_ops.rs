@@ -108,6 +108,10 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
         
     fn try_reformulate_length_mut<const M: usize>(&mut self) -> Option<&mut [T; M]>;
 
+    fn into_collumn(self) -> [[T; 1]; N];
+    fn as_collumn(&self) -> &[[T; 1]; N];
+    fn as_collumn_mut(&mut self) -> &mut [[T; 1]; N];
+
     /// Maps all values of an array with a given function.
     /// 
     /// # Example
@@ -1270,6 +1274,25 @@ pub const fn try_reformulate_length_mut<T, const N: usize, const M: usize>(array
     }
 }
 
+pub const fn into_collumn<T, const N: usize>(array: [T; N]) -> [[T; 1]; N]
+{
+    unsafe {
+        private::transmute_unchecked_size(array)
+    }
+}
+pub const fn as_collumn<T, const N: usize>(array: &[T; N]) -> &[[T; 1]; N]
+{
+    unsafe {
+        &*array.as_ptr().cast()
+    }
+}
+pub const fn as_collumn_mut<T, const N: usize>(array: &mut [T; N]) -> &mut [[T; 1]; N]
+{
+    unsafe {
+        &mut *array.as_mut_ptr().cast()
+    }
+}
+
 pub const fn chain<T, const N: usize, const M: usize>(array: [T; N], rhs: [T; M]) -> [T; N + M]
 {
     unsafe {private::merge_transmute(array, rhs)}
@@ -1848,6 +1871,19 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
     fn try_reformulate_length_mut<const M: usize>(&mut self) -> Option<&mut [T; M]>
     {
         crate::try_reformulate_length_mut(self)
+    }
+    
+    fn into_collumn(self) -> [[T; 1]; N]
+    {
+        crate::into_collumn(self)
+    }
+    fn as_collumn(&self) -> &[[T; 1]; N]
+    {
+        crate::as_collumn(self)
+    }
+    fn as_collumn_mut(&mut self) -> &mut [[T; 1]; N]
+    {
+        crate::as_collumn_mut(self)
     }
 
     /*fn into_const_iter(self) -> IntoConstIter<T, N, true>

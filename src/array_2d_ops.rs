@@ -5,12 +5,6 @@ use super::*;
 #[const_trait]
 pub trait Array2dOps<T, const M: usize, const N: usize>: ArrayOps<[T; N], M>
 {
-    type Array2d<I, const H: usize, const W: usize>: Array2dOps<I, H, W>;
-    
-    type Resized2d<const H: usize, const W: usize>: Array2dOps<T, H, W> = Self::Array2d<T, H, W>;
-    
-    type Transposed: Array2dOps<T, N, M> = Self::Resized2d<N, M>;
-
     /// Transposes a two-dimensional array (as if it were a matrix)
     /// 
     /// # Example
@@ -32,7 +26,7 @@ pub trait Array2dOps<T, const M: usize, const N: usize>: ArrayOps<[T; N], M>
     ///     [5, 10, 15]
     /// ]);
     /// ```
-    fn transpose(self) -> Self::Transposed;
+    fn transpose(self) -> [[T; M]; N];
     
     fn mul_kronecker<Rhs, const H: usize, const W: usize>(&self, rhs: &[[Rhs; W]; H]) -> [[<T as Mul<Rhs>>::Output; W*N]; H*N]
     where
@@ -105,9 +99,7 @@ pub const fn diagonal_mut<T, const M: usize, const N: usize>(array: &mut [[T; N]
 
 impl<T, const M: usize, const N: usize> Array2dOps<T, M, N> for [[T; N]; M]
 {
-    type Array2d<I, const H: usize, const W: usize> = [[I; W]; H];
-    
-    fn transpose(self) -> Self::Transposed
+    fn transpose(self) -> [[T; M]; N]
     {
         crate::transpose(self)
     }

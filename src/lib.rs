@@ -30,7 +30,8 @@ moddef::moddef!(
         array_nd_ops,
         array_ops,
         array_simd_ops,
-        square_array_2d_ops
+        square_array_2d_ops,
+        collumn_array_ops,
         //partitioned_array,
         //partitioned_array_ops
     },
