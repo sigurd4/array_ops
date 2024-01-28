@@ -2,7 +2,7 @@
 name = "array__ops"
 version = "0.1.10"
 edition = "2021"
-license = "MIT"
+license = "mit"
 description = "A selection of useful array operations"
 repository = "https://github.com/sigurd4/array_ops"
 keywords = ["array", "util", "ops"]

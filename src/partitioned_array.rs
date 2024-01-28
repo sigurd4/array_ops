@@ -58,7 +58,7 @@ where
     [(); PART_LENGTHS.len()]:
 {
     pub const PARTS: usize = PART_LENGTHS.len();
-    pub const PART_LENGTHS: [usize; PART_LENGTHS.len()] = *PART_LENGTHS.split_array_ref2().0;
+    pub const PART_LENGTHS: [usize; PART_LENGTHS.len()] = *slice_ops::split_array_ref(PART_LENGTHS).0;
     pub const SERIALIZED_LENGTH: usize = sum_len::<{PART_LENGTHS}>();
 
     pub const fn partition(array: [T; sum_len::<PART_LENGTHS>()]) -> Self
@@ -88,18 +88,21 @@ where
         self.0.as_mut_ptr()
     }
 
-    pub const fn part_offsets() -> [usize; PART_LENGTHS.len()]
+    pub fn part_offsets() -> [usize; PART_LENGTHS.len()]
     {
-        Self::PART_LENGTHS.integrate_from(0)
+        let mut o = Self::PART_LENGTHS;
+        o.integrate();
+        o.sub_assign_each(Self::PART_LENGTHS);
+        o
     }
-    pub const fn each_ptr(&self) -> [*const T; PART_LENGTHS.len()]
+    pub fn each_ptr(&self) -> [*const T; PART_LENGTHS.len()]
     {
         let ptr = self.as_ptr();
         
         Self::part_offsets()
             .map2(|offset| unsafe {ptr.add(offset)})
     }
-    pub const fn each_mut_ptr(&mut self) -> [*mut T; PART_LENGTHS.len()]
+    pub fn each_mut_ptr(&mut self) -> [*mut T; PART_LENGTHS.len()]
     {
         let ptr = self.as_mut_ptr();
 
@@ -107,32 +110,30 @@ where
             .map2(|offset| unsafe {ptr.add(offset)})
     }
 
-    pub const fn each_slice(&self) -> [&[T]; PART_LENGTHS.len()]
+    pub fn each_slice(&self) -> [&[T]; PART_LENGTHS.len()]
     {
         self.each_ptr()
-            .zip2(Self::PART_LENGTHS)
-            .map2(|(ptr, len)| unsafe {core::slice::from_raw_parts(ptr, len)})
+            .comap(Self::PART_LENGTHS, |ptr, len| unsafe {core::slice::from_raw_parts(ptr, len)})
     }
-    pub const fn each_slice_mut(&mut self) -> [&mut [T]; PART_LENGTHS.len()]
+    pub fn each_slice_mut(&mut self) -> [&mut [T]; PART_LENGTHS.len()]
     {
         self.each_mut_ptr()
-            .zip2(Self::PART_LENGTHS)
-            .map2(|(ptr, len)| unsafe {core::slice::from_raw_parts_mut(ptr, len)})
+            .comap(Self::PART_LENGTHS, |ptr, len| unsafe {core::slice::from_raw_parts_mut(ptr, len)})
     }
 
-    pub const fn get_slice(&self, index: usize) -> Option<&[T]>
+    pub fn get_slice(&self, index: usize) -> Option<&[T]>
     {
         self.each_ptr()
-            .zip2(Self::PART_LENGTHS)
+            .zip(Self::PART_LENGTHS)
             .get(index)
             .map(|&(ptr, len)| unsafe {core::slice::from_raw_parts(ptr, len)})
     }
-    pub const fn get_slice_mut(&mut self, index: usize) -> Option<&mut [T]>
+    pub fn get_slice_mut(&mut self, index: usize) -> Option<&mut [T]>
     {
         self.each_mut_ptr()
-            .zip2(Self::PART_LENGTHS)
+            .zip(Self::PART_LENGTHS)
             .get(index)
-            .map(const |&(ptr, len)| unsafe {core::slice::from_raw_parts_mut(ptr, len)})
+            .map(|&(ptr, len)| unsafe {core::slice::from_raw_parts_mut(ptr, len)})
     }
 
     pub const fn reinterpret_lengths<const S: usize, const P: &'static [usize]>(self) -> PartitionedArray<T, {P}>
@@ -196,6 +197,7 @@ mod test
         assert_eq!(Some(tuple.1.as_slice()), partition.get_slice(1));
         assert_eq!(Some(tuple.2.as_slice()), partition.get_slice(2));
 
+        println!("o = {:?}", PartitionedArray::<u8, {&[2usize, 3, 2]}>::part_offsets());
         println!("a = {:?}", partition.each_slice());
     }
 }

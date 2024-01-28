@@ -20,6 +20,7 @@
 #![feature(const_swap)]
 #![feature(allocator_api)]
 #![cfg_attr(feature = "std", feature(new_uninit))]
+#![feature(adt_const_params)]
 
 #![feature(const_closures)]
 #![feature(generic_const_exprs)]
@@ -32,7 +33,7 @@ moddef::moddef!(
         array_simd_ops,
         square_array_2d_ops,
         collumn_array_ops,
-        //partitioned_array,
+        partitioned_array,
         //partitioned_array_ops
     },
     mod private
