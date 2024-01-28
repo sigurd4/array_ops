@@ -33,8 +33,6 @@ moddef::moddef!(
         array_simd_ops,
         square_array_2d_ops,
         collumn_array_ops,
-        partitioned_array,
-        //partitioned_array_ops
     },
     mod private
 );
