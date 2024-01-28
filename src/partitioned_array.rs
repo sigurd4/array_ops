@@ -64,6 +64,16 @@ where
         Self::PART_LENGTHS.split_at(mid)
     }
 
+    /*pub fn split_parts<const N: usize>(self) -> (PartitionedArray<T, {Self::split_lengths_left(N)}>, PartitionedArray<T, {Self::split_lengths_right(N)}>)
+    where
+        [(); sum_len::<{Self::split_lengths_left(N)}>()]:,
+        [(); sum_len::<{Self::split_lengths_right(N)}>()]:
+    {
+        unsafe {
+            private::split_transmute(self)
+        }
+    }*/
+
     pub const fn partition(array: [T; sum_len::<PART_LENGTHS>()]) -> Self
     {
         Self(array)
@@ -124,6 +134,15 @@ where
             .comap(Self::PART_LENGTHS, |ptr, len| unsafe {core::slice::from_raw_parts_mut(ptr, len)})
     }
 
+    /*pub fn get_array<const I: usize>(&self) -> &[T; Self::PART_LENGTHS[I]]
+    where
+        [(); Self::PARTS - I]:
+    {
+        unsafe {
+            &*self.each_ptr()[I].cast()
+        }
+    }*/
+
     pub fn get_slice(&self, index: usize) -> Option<&[T]>
     {
         self.each_ptr()
@@ -181,6 +200,34 @@ where
         [(); all_len_eq::<{PART_LENGTHS}, {P}>() as usize - 1]:
     {
         unsafe {core::mem::transmute(self)}
+    }
+}
+
+impl<'a, T, const PART_LENGTHS: &'static [usize]> IntoIterator for &'a PartitionedArray<T, PART_LENGTHS>
+where
+    [(); sum_len::<{PART_LENGTHS}>()]:,
+    [(); PART_LENGTHS.len()]:
+{
+    type Item = &'a [T];
+    type IntoIter = <[&'a [T]; PART_LENGTHS.len()] as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter
+    {
+        self.each_slice().into_iter()
+    }
+}
+
+impl<'a, T, const PART_LENGTHS: &'static [usize]> IntoIterator for &'a mut PartitionedArray<T, PART_LENGTHS>
+where
+    [(); sum_len::<{PART_LENGTHS}>()]:,
+    [(); PART_LENGTHS.len()]:
+{
+    type Item = &'a mut [T];
+    type IntoIter = <[&'a mut [T]; PART_LENGTHS.len()] as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter
+    {
+        self.each_slice_mut().into_iter()
     }
 }
 
