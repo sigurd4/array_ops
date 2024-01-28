@@ -1,15 +1,5 @@
 use super::*;
 
-pub const fn split_all_len<const PART_LENGTHS: &'static [usize], const N: usize, const PICK: bool>() -> &'static [usize]
-{
-    let split = PART_LENGTHS.split_at(N);
-    match PICK
-    {
-        false => split.0,
-        true => split.1
-    }
-}
-
 pub const fn sum_len<const PART_LENGTHS: &'static [usize]>() -> usize
 {
     let mut i = 0;
@@ -60,6 +50,19 @@ where
     pub const PARTS: usize = PART_LENGTHS.len();
     pub const PART_LENGTHS: [usize; PART_LENGTHS.len()] = *slice_ops::split_array_ref(PART_LENGTHS).0;
     pub const SERIALIZED_LENGTH: usize = sum_len::<{PART_LENGTHS}>();
+    
+    pub const fn split_lengths_left(mid: usize) -> &'static [usize]
+    {
+        Self::PART_LENGTHS.split_at(mid).0
+    }
+    pub const fn split_lengths_right(mid: usize) -> &'static [usize]
+    {
+        Self::PART_LENGTHS.split_at(mid).1
+    }
+    pub const fn split_lengths(mid: usize) -> (&'static [usize], &'static [usize])
+    {
+        Self::PART_LENGTHS.split_at(mid)
+    }
 
     pub const fn partition(array: [T; sum_len::<PART_LENGTHS>()]) -> Self
     {
