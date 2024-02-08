@@ -1,4 +1,4 @@
-use core::{borrow::{Borrow, BorrowMut}, alloc::Allocator, marker::Destruct, mem::{ManuallyDrop, MaybeUninit}, ops::{Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign}, simd::{LaneCount, Simd, SimdElement, SupportedLaneCount}};
+use core::{alloc::Allocator, borrow::{Borrow, BorrowMut}, cmp::Ordering, marker::Destruct, mem::{ManuallyDrop, MaybeUninit}, ops::{Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign}, simd::{LaneCount, Simd, SimdElement, SupportedLaneCount}};
 
 use array_trait::Array;
 use slice_ops::Padded;
@@ -1537,7 +1537,7 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
     {
         let mut array = MaybeUninit::uninit_array();
         let mut i = 0;
-        while i != N
+        while i < N
         {
             array[i] = MaybeUninit::new(fill(i));
             i += 1;
@@ -1549,7 +1549,7 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
         F: FnMut(usize) -> T + Destruct
     {
         let mut array = MaybeUninit::uninit_array();
-        if N != 0
+        if N > 0
         {
             let mut i = N - 1;
             loop
