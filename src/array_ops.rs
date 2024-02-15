@@ -1486,16 +1486,27 @@ pub const fn bit_reverse_permutation<T, const N: usize>(array: &mut [T; N])
 where
     [(); N.is_power_of_two() as usize - 1]:
 {
-    let mut i = 0;
-    while i < N/2
+    if N <= 2
     {
-        let j = i.reverse_bits() >> (N.leading_zeros() + 1);
-        if i != j
+        return;
+    }
+    let mut i = 0;
+    let mut j = 0;
+    while i < N - 2
+    {
+        if i < j
         {
             unsafe {
                 core::ptr::swap_nonoverlapping(array.as_mut_ptr().add(i), array.as_mut_ptr().add(j), 1);
             }
         }
+        let mut k = N/2;
+        while k <= j
+        {
+            j -= k;
+            k /= 2;
+        }
+        j += k;
         i += 1;
     }
 }
