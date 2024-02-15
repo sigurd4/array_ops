@@ -1,6 +1,6 @@
 [package]
 name = "array__ops"
-version = "0.1.10"
+version = "0.1.11"
 edition = "2021"
 license = "mit"
 description = "A selection of useful array operations"
