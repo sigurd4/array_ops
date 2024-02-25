@@ -16,6 +16,7 @@
 #![feature(const_ptr_write)]
 #![feature(const_maybe_uninit_assume_init)]
 #![feature(associated_const_equality)]
+#![feature(const_intrinsic_copy)]
 #![feature(portable_simd)]
 #![feature(const_swap)]
 #![feature(allocator_api)]
