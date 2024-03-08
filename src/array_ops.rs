@@ -427,6 +427,9 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     fn try_mul_dot<Rhs>(self, rhs: [Rhs; N]) -> Option<<T as Mul<Rhs>>::Output>
     where
         T: Mul<Rhs, Output: AddAssign>;
+    fn proj<Rhs>(self, rhs: [Rhs; N]) -> [<T as Mul<<<T as Mul<Rhs>>::Output as Div<<T as Mul<T>>::Output>>::Output>>::Output; N]
+    where
+        T: Mul<Rhs, Output: AddAssign + Div<<T as Mul>::Output, Output: Copy>> + Mul<T, Output: AddAssign> + Mul<<<T as Mul<Rhs>>::Output as Div<<T as Mul<T>>::Output>>::Output> + Copy;
 
     fn mul_dot_bias<Rhs>(self, rhs: [Rhs; N], bias: <T as Mul<Rhs>>::Output) -> <T as Mul<Rhs>>::Output
     where
@@ -2640,6 +2643,22 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
             core::mem::forget(self);
             core::mem::forget(rhs);
             Some(sum)
+        }
+    }
+    fn proj<Rhs>(self, rhs: [Rhs; N]) -> [<T as Mul<<<T as Mul<Rhs>>::Output as Div<<T as Mul<T>>::Output>>::Output>>::Output; N]
+    where
+        T: Mul<Rhs, Output: AddAssign + Div<<T as Mul>::Output, Output: Copy>> + Mul<T, Output: AddAssign> + Mul<<<T as Mul<Rhs>>::Output as Div<<T as Mul<T>>::Output>>::Output> + Copy
+    {
+        let uv = self.try_mul_dot(rhs);
+        let uu = self.try_magnitude_squared();
+        if let Some(uv) = uv && let Some(uu) = uu
+        {
+            self.mul_all(uv/uu)
+        }
+        else
+        {
+            // Array must have length 0
+            unsafe {private::transmute_unchecked_size(())}
         }
     }
     

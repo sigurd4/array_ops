@@ -16,13 +16,14 @@
 #![feature(const_ptr_write)]
 #![feature(const_maybe_uninit_assume_init)]
 #![feature(associated_const_equality)]
-#![feature(const_intrinsic_copy)]
 #![feature(portable_simd)]
 #![feature(const_swap)]
 #![feature(allocator_api)]
 #![cfg_attr(feature = "std", feature(new_uninit))]
-#![feature(adt_const_params)]
+#![feature(let_chains)]
 
+#![feature(const_intrinsic_copy)]
+#![feature(adt_const_params)]
 #![feature(const_closures)]
 #![feature(generic_const_exprs)]
 
