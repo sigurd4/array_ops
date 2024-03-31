@@ -79,6 +79,15 @@ mod tests {
     use super::*;
 
     #[test]
+    fn toeplitz()
+    {
+        let a = [1, 2, 3];
+        let t = a.toeplitz();
+
+        println!("{:?}", t)
+    }
+
+    #[test]
     fn mod0()
     {
         let a = [1, 2, 3];

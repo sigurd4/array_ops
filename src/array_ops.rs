@@ -174,6 +174,10 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
         T: Default + Copy,
         [(); H - N]:,
         [(); W - N]:;
+
+    fn toeplitz(&self) -> [[T; N]; N]
+    where
+        T: Copy;
     
     /// Differentiates array (discrete calculus)
     /// 
@@ -2041,6 +2045,13 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
         core::mem::forget(self);
     
         dst
+    }
+    
+    fn toeplitz(&self) -> [[T; N]; N]
+    where
+        T: Copy
+    {
+        ArrayOps::fill(|i| ArrayOps::fill(|j| self[if i >= j {i - j} else {j - i}]))
     }
 
     fn differentiate(&mut self)
