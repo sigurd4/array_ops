@@ -82,9 +82,12 @@ mod tests {
     fn toeplitz()
     {
         let a = [1, 2, 3];
-        let t = a.toeplitz();
+        let t = a.toeplitz_matrix();
+        let b = [4, 5, 6];
+        let h = a.hankel_matrix(&b);
 
-        println!("{:?}", t)
+        println!("{:?}", t);
+        println!("{:?}", h)
     }
 
     #[test]

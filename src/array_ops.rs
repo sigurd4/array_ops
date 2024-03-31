@@ -175,7 +175,10 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
         [(); H - N]:,
         [(); W - N]:;
 
-    fn toeplitz(&self) -> [[T; N]; N]
+    fn toeplitz_matrix(&self) -> [[T; N]; N]
+    where
+        T: Copy;
+    fn hankel_matrix<const M: usize>(&self, r: &[T; M]) -> [[T; M]; N]
     where
         T: Copy;
     
@@ -2047,11 +2050,24 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
         dst
     }
     
-    fn toeplitz(&self) -> [[T; N]; N]
+    fn toeplitz_matrix(&self) -> [[T; N]; N]
     where
         T: Copy
     {
         ArrayOps::fill(|i| ArrayOps::fill(|j| self[if i >= j {i - j} else {j - i}]))
+    }
+    fn hankel_matrix<const M: usize>(&self, r: &[T; M]) -> [[T; M]; N]
+    where
+        T: Copy
+    {
+        ArrayOps::fill(|i| ArrayOps::fill(|j| if i + j < N
+        {
+            self[i + j]
+        }
+        else
+        {
+            r[i + j + 1 - N]
+        }))
     }
 
     fn differentiate(&mut self)
