@@ -79,6 +79,16 @@ mod tests {
     use super::*;
 
     #[test]
+    fn kronecker()
+    {
+        let a = [1, 2, 3];
+        let b = [1, 2];
+        let [c] = [a].mul_kronecker(&[b]);
+
+        println!("{:?}", c)
+    }
+
+    #[test]
     fn toeplitz()
     {
         let a = [1, 2, 3];

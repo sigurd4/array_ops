@@ -28,7 +28,7 @@ pub trait Array2dOps<T, const M: usize, const N: usize>: ArrayOps<[T; N], M>
     /// ```
     fn transpose(self) -> [[T; M]; N];
     
-    fn mul_kronecker<Rhs, const H: usize, const W: usize>(&self, rhs: &[[Rhs; W]; H]) -> [[<T as Mul<Rhs>>::Output; W*N]; H*N]
+    fn mul_kronecker<Rhs, const H: usize, const W: usize>(&self, rhs: &[[Rhs; W]; H]) -> [[<T as Mul<Rhs>>::Output; N*W]; M*H]
     where
         T: Mul<Rhs> + Copy,
         Rhs: Copy;
@@ -104,7 +104,7 @@ impl<T, const M: usize, const N: usize> Array2dOps<T, M, N> for [[T; N]; M]
         crate::transpose(self)
     }
     
-    fn mul_kronecker<Rhs, const H: usize, const W: usize>(&self, rhs: &[[Rhs; W]; H]) -> [[<T as Mul<Rhs>>::Output; W*N]; H*N]
+    fn mul_kronecker<Rhs, const H: usize, const W: usize>(&self, rhs: &[[Rhs; W]; H]) -> [[<T as Mul<Rhs>>::Output; N*W]; M*H]
     where
         T: Mul<Rhs> + Copy,
         Rhs: Copy
