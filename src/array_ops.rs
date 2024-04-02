@@ -961,11 +961,27 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// 
     /// let mut arr = [0b000, 0b001, 0b010, 0b011, 0b100, 0b101, 0b110, 0b111];
     /// 
-    /// arr.bit_reverse_permutation();
+    /// arr.bit_rev_permutation();
     /// 
     /// assert_eq!(arr, [0b000, 0b100, 0b010, 0b110, 0b001, 0b101, 0b011, 0b111])
     /// ```
-    fn bit_reverse_permutation(&mut self)
+    fn bit_rev_permutation(&mut self)
+    where
+        [(); N.is_power_of_two() as usize - 1]:;
+
+    /// Performs the grey code permutation. Length must be a power of 2.
+    /// 
+    /// # Example
+    /// ```rust
+    /// use array__ops::*;
+    /// 
+    /// let mut arr = [0b000, 0b001, 0b010, 0b011, 0b100, 0b101, 0b110, 0b111];
+    /// 
+    /// arr.grey_code_permutation();
+    /// 
+    /// assert_eq!(arr, [0b000, 0b001, 0b011, 0b010, 0b110, 0b111, 0b101, 0b100])
+    /// ```
+    fn grey_code_permutation(&mut self)
     where
         [(); N.is_power_of_two() as usize - 1]:;
 }
@@ -1484,7 +1500,7 @@ fn bench()
     let t0 = SystemTime::now();
     for _ in 0..1000
     {
-        a.bit_reverse_permutation();
+        a.bit_rev_permutation();
     }
     let dt = SystemTime::now().duration_since(t0);
 
@@ -1492,7 +1508,7 @@ fn bench()
     println!("{:?}", dt);
 }
 
-pub const fn bit_reverse_permutation<T, const N: usize>(array: &mut [T; N])
+pub const fn bit_rev_permutation<T, const N: usize>(array: &mut [T; N])
 where
     [(); N.is_power_of_two() as usize - 1]:
 {
@@ -1517,6 +1533,28 @@ where
             k /= 2;
         }
         j += k;
+        i += 1;
+    }
+}
+
+pub const fn grey_code_permutation<T, const N: usize>(array: &mut [T; N])
+where
+    [(); N.is_power_of_two() as usize - 1]:
+{
+    let mut i = 0;
+    while i < N
+    {
+        let mut j = i ^ (i >> 1);
+        while j < i
+        {
+            j = j ^ (j >> 1);
+        }
+        if j != i
+        {
+            unsafe {
+                core::ptr::swap_nonoverlapping(array.as_mut_ptr().add(i), array.as_mut_ptr().add(j), 1);
+            }
+        }
         i += 1;
     }
 }
@@ -2982,10 +3020,17 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
         })
     }
     
-    fn bit_reverse_permutation(&mut self)
+    fn bit_rev_permutation(&mut self)
     where
         [(); N.is_power_of_two() as usize - 1]:
     {
-        crate::bit_reverse_permutation(self)
+        crate::bit_rev_permutation(self)
+    }
+
+    fn grey_code_permutation(&mut self)
+    where
+        [(); N.is_power_of_two() as usize - 1]:
+    {
+        crate::grey_code_permutation(self)
     }
 }
