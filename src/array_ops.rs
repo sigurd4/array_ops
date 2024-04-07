@@ -1,7 +1,7 @@
 use core::{alloc::Allocator, borrow::{Borrow, BorrowMut}, cmp::Ordering, marker::Destruct, mem::{ManuallyDrop, MaybeUninit}, ops::{Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign}, simd::{LaneCount, Simd, SimdElement, SupportedLaneCount}};
 
 use array_trait::Array;
-use slice_ops::Padded;
+use slice_ops::{is_power_of, Padded};
 
 use super::*;
 
@@ -967,7 +967,10 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// ```
     fn bit_rev_permutation(&mut self)
     where
-        [(); N.is_power_of_two() as usize - 1]:;
+        [(); is_power_of(N, 2) as usize - 1]:;
+    fn digit_rev_permutation<const R: usize>(&mut self)
+    where
+        [(); is_power_of(N, R) as usize - 1]:;
 
     /// Performs the grey code permutation. Length must be a power of 2.
     /// 
@@ -1508,29 +1511,30 @@ fn bench()
     println!("{:?}", dt);
 }
 
-pub const fn bit_rev_permutation<T, const N: usize>(array: &mut [T; N])
+pub const fn digit_rev_permutation<T, const N: usize, const R: usize>(array: &mut [T; N])
 where
-    [(); N.is_power_of_two() as usize - 1]:
+    [(); is_power_of(N, R) as usize - 1]:
 {
-    if N <= 2
+    if N <= R
     {
         return;
     }
-    let mut i = 0;
-    let mut j = 0;
-    while i < N - 2
+
+    let mut i = 1;
+    let mut j = N/R + 1;
+    while i < N - 1
     {
-        if i < j
+        if i < j - 1
         {
             unsafe {
-                core::ptr::swap_nonoverlapping(array.as_mut_ptr().add(i), array.as_mut_ptr().add(j), 1);
+                core::ptr::swap_nonoverlapping(array.as_mut_ptr().add(i), array.as_mut_ptr().add(j - 1), 1);
             }
         }
-        let mut k = N/2;
-        while k <= j
+        let mut k = N/R;
+        while k*(R - 1) < j
         {
-            j -= k;
-            k /= 2;
+            j -= k*(R - 1);
+            k /= R;
         }
         j += k;
         i += 1;
@@ -3022,9 +3026,15 @@ impl<T, const N: usize> ArrayOps<T, N> for [T; N]
     
     fn bit_rev_permutation(&mut self)
     where
-        [(); N.is_power_of_two() as usize - 1]:
+        [(); is_power_of(N, 2) as usize - 1]:
     {
-        crate::bit_rev_permutation(self)
+        self.digit_rev_permutation::<2>()
+    }
+    fn digit_rev_permutation<const R: usize>(&mut self)
+    where
+        [(); is_power_of(N, R) as usize - 1]:
+    {
+        crate::digit_rev_permutation::<_, _, R>(self)
     }
 
     fn grey_code_permutation(&mut self)

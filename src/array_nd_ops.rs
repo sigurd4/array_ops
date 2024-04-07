@@ -5,7 +5,6 @@ use array_trait::{ArrayNd, Array};
 use super::*;
 
 /// A trait for N-dimensional arrays
-#[const_trait]
 pub trait ArrayNdOps<const D: usize, T, const L: usize>: Array + ArrayNd<D, ItemNd = T, /*FLAT_LENGTH = {L}*/>
 {
     type Mapped<M>: /*~const*/ ArrayNdOps<D, M, L>;
