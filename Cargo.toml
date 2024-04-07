@@ -16,4 +16,4 @@ std = ["slice_ops/std"]
 [dependencies]
 moddef = "0.2.2"
 array_trait = "1.0.0"
-slice_ops = "0.1.8"
+slice_ops = "0.1.10"
