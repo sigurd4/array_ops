@@ -535,13 +535,13 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// 
     /// let array = ["ping 1", "pong 1", "ping 2", "pong 2", "ping 3", "pong 3", "uhh..."];
     /// 
-    /// let ([ping, pong], rest) = array.spread::<2>();
+    /// let ([ping, pong], rest) = array.spread_chunks::<2>();
     /// 
     /// assert_eq!(ping, ["ping 1", "ping 2", "ping 3"]);
     /// assert_eq!(pong, ["pong 1", "pong 2", "pong 3"]);
     /// assert_eq!(rest, ["uhh..."]);
     /// ```
-    fn spread<const M: usize>(self) -> ([[T; N / M]; M], [T; N % M])
+    fn spread_chunks<const M: usize>(self) -> ([[T; N / M]; M], [T; N % M])
     where
         [(); M - 1]:,
         [(); N / M]:,
@@ -550,7 +550,7 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// Distributes items of an array-slice equally across a given width, then provides the rest as a separate array-slice.
     /// 
     /// The spread-out slices are given in padded arrays. Each padded item can be borrowed into a reference to the array's item.
-    fn spread_ref<const M: usize>(&self) -> ([&[Padded<T, M>; N / M]; M], &[T; N % M])
+    fn spread_chunks_ref<const M: usize>(&self) -> ([&[Padded<T, M>; N / M]; M], &[T; N % M])
     where
         [(); M - 1]:,
         [(); N % M]:;
@@ -569,21 +569,21 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// 
     /// let mut array = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"];
     /// 
-    /// let (threes, _) = array.spread_mut::<3>();
+    /// let (threes, _) = array.spread_chunks_mut::<3>();
     /// 
     /// for fizz in threes.into_iter().last().unwrap()
     /// {
     ///     **fizz = "fizz";
     /// }
     /// 
-    /// let (fives, _) = array.spread_mut::<5>();
+    /// let (fives, _) = array.spread_chunks_mut::<5>();
     /// 
     /// for buzz in fives.into_iter().last().unwrap()
     /// {
     ///     **buzz = "buzz";
     /// }
     /// 
-    /// let (fifteens, _) = array.spread_mut::<15>();
+    /// let (fifteens, _) = array.spread_chunks_mut::<15>();
     /// 
     /// for fizzbuzz in fifteens.into_iter().last().unwrap()
     /// {
@@ -593,13 +593,13 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// assert_eq!(array, ["1", "2", "fizz", "4", "buzz", "fizz", "7", "8", "fizz", "buzz", "11", "fizz", "13", "14", "fizzbuzz", "16", "17", "fizz", "19", "buzz"]);
     /// 
     /// ```
-    fn spread_mut<const M: usize>(&mut self) -> ([&mut [Padded<T, M>; N / M]; M], &mut [T; N % M])
+    fn spread_chunks_mut<const M: usize>(&mut self) -> ([&mut [Padded<T, M>; N / M]; M], &mut [T; N % M])
     where
         [(); M - 1]:,
         [(); N % M]:;
     
     /// Distributes items of an array equally across a given width, then provides the leftmost rest as a separate array.
-    fn rspread<const M: usize>(self) -> ([T; N % M], [[T; N / M]; M])
+    fn rspread_chunks<const M: usize>(self) -> ([T; N % M], [[T; N / M]; M])
     where
         [(); M - 1]:,
         [(); N / M]:,
@@ -621,13 +621,13 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// 
     /// let array = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
     /// 
-    /// let (zero, [odd, even]) = array.rspread_ref::<2>();
+    /// let (zero, [odd, even]) = array.rspread_chunks_ref::<2>();
     /// 
     /// assert_eq!(*zero, [0]);
     /// assert_eq!(odd.each_ref().map(|padding| **padding), [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]);
     /// assert_eq!(even.each_ref().map(|padding| **padding), [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
     /// ```
-    fn rspread_ref<const M: usize>(&self) -> (&[T; N % M], [&[Padded<T, M>; N / M]; M])
+    fn rspread_chunks_ref<const M: usize>(&self) -> (&[T; N % M], [&[Padded<T, M>; N / M]; M])
     where
         [(); M - 1]:,
         [(); N % M]:;
@@ -646,7 +646,7 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// 
     /// let mut array = ["the", "beat", "goes", "1", "2", "3", "4", "5", "6", "7", "8"];
     /// 
-    /// let (start, [boots, n, cats, and]) = array.rspread_mut::<4>();
+    /// let (start, [boots, n, cats, and]) = array.rspread_chunks_mut::<4>();
     /// 
     /// for boots in boots
     /// {
@@ -667,7 +667,7 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// 
     /// assert_eq!(array, ["the", "beat", "goes", "boots", "n", "cats", "and", "boots", "n", "cats", "and"]);
     /// ```
-    fn rspread_mut<const M: usize>(&mut self) -> (&mut [T; N % M], [&mut [Padded<T, M>; N / M]; M])
+    fn rspread_chunks_mut<const M: usize>(&mut self) -> (&mut [T; N % M], [&mut [Padded<T, M>; N / M]; M])
     where
         [(); M - 1]:,
         [(); N % M]:;
@@ -686,12 +686,12 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// 
     /// let array = *b"aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ";
     /// 
-    /// let [lower_case, upper_case] = array.spread_exact::<2>();
+    /// let [lower_case, upper_case] = array.spread_chunks_exact::<2>();
     /// 
     /// assert_eq!(lower_case, *b"abcdefghijklmnopqrstuvwxyz");
     /// assert_eq!(upper_case, *b"ABCDEFGHIJKLMNOPQRSTUVWXYZ");
     /// ```
-    fn spread_exact<const M: usize>(self) -> [[T; N / M]; M]
+    fn spread_chunks_exact<const M: usize>(self) -> [[T; N / M]; M]
     where
         [(); M - 1]:,
         [(); 0 - N % M]:,
@@ -714,12 +714,12 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// 
     /// let statement = ["s", "he", "be", "lie", "ve", "d"];
     /// 
-    /// let [interpretation2, interpretation1] = statement.spread_exact_ref::<2>();
+    /// let [interpretation2, interpretation1] = statement.spread_chunks_exact_ref::<2>();
     /// 
     /// assert_eq!(interpretation1, &["he", "lie", "d"]);
     /// assert_eq!(interpretation2, &["s", "be", "ve"]);
     /// ```
-    fn spread_exact_ref<const M: usize>(&self) -> [&[Padded<T, M>; N / M]; M]
+    fn spread_chunks_exact_ref<const M: usize>(&self) -> [&[Padded<T, M>; N / M]; M]
     where
         [(); M - 1]:,
         [(); 0 - N % M]:;
@@ -741,7 +741,7 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// 
     /// let mut array = *b"aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ";
     /// 
-    /// let [lower_case, upper_case] = array.spread_exact_mut::<2>();
+    /// let [lower_case, upper_case] = array.spread_chunks_exact_mut::<2>();
     /// 
     /// assert_eq!(lower_case.each_ref().map(|padding| padding.borrow()), b"abcdefghijklmnopqrstuvwxyz".each_ref());
     /// assert_eq!(upper_case.each_ref().map(|padding| padding.borrow()), b"ABCDEFGHIJKLMNOPQRSTUVWXYZ".each_ref());
@@ -753,7 +753,7 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// 
     /// assert_eq!(array, *b"a_b_c_d_e_f_g_h_i_j_k_l_m_n_o_p_q_r_s_t_u_v_w_x_y_z_")
     /// ```
-    fn spread_exact_mut<const M: usize>(&mut self) -> [&mut [Padded<T, M>; N / M]; M]
+    fn spread_chunks_exact_mut<const M: usize>(&mut self) -> [&mut [Padded<T, M>; N / M]; M]
     where
         [(); M - 1]:,
         [(); 0 - N % M]:;
@@ -1331,7 +1331,7 @@ pub const fn rchain<T, const N: usize, const M: usize>(array: [T; N], rhs: [T; M
     unsafe {private::merge_transmute(rhs, array)}
 }
 
-pub const fn spread<T, const N: usize, const M: usize>(array: [T; N]) -> ([[T; N / M]; M], [T; N % M])
+pub const fn spread_chunks<T, const N: usize, const M: usize>(array: [T; N]) -> ([[T; N / M]; M], [T; N % M])
 where
     [(); M - 1]:,
     [(); N % M]:,
@@ -1346,7 +1346,7 @@ where
     (crate::transpose(spread_t), rest)
 }
 
-pub const fn rspread<T, const N: usize, const M: usize>(array: [T; N]) -> ([T; N % M], [[T; N / M]; M])
+pub const fn rspread_chunks<T, const N: usize, const M: usize>(array: [T; N]) -> ([T; N % M], [[T; N / M]; M])
 where
     [(); M - 1]:,
     [(); N % M]:,
@@ -1361,7 +1361,7 @@ where
     (start, crate::transpose(spread_t))
 }
 
-pub const fn spread_exact<T, const N: usize, const M: usize>(array: [T; N]) -> [[T; N / M]; M]
+pub const fn spread_chunks_exact<T, const N: usize, const M: usize>(array: [T; N]) -> [[T; N / M]; M]
 where
     [(); M - 1]:,
     [(); 0 - N % M]:,
@@ -2799,15 +2799,15 @@ impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
         crate::rchain(self, rhs)
     }
     
-    fn spread<const M: usize>(self) -> ([[T; N / M]; M], [T; N % M])
+    fn spread_chunks<const M: usize>(self) -> ([[T; N / M]; M], [T; N % M])
     where
         [(); M - 1]:,
         [(); N % M]:,
         [(); N / M]:
     {
-        crate::spread(self)
+        crate::spread_chunks(self)
     }
-    fn spread_ref<const M: usize>(&self) -> ([&[Padded<T, M>; N / M]; M], &[T; N % M])
+    fn spread_chunks_ref<const M: usize>(&self) -> ([&[Padded<T, M>; N / M]; M], &[T; N % M])
     where
         [(); M - 1]:,
         [(); N % M]:
@@ -2819,7 +2819,7 @@ impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
             &*right.cast()
         )}
     }
-    fn spread_mut<const M: usize>(&mut self) -> ([&mut [Padded<T, M>; N / M]; M], &mut [T; N % M])
+    fn spread_chunks_mut<const M: usize>(&mut self) -> ([&mut [Padded<T, M>; N / M]; M], &mut [T; N % M])
     where
         [(); M - 1]:,
         [(); N % M]:
@@ -2832,15 +2832,15 @@ impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
         )}
     }
     
-    fn rspread<const M: usize>(self) -> ([T; N % M], [[T; N / M]; M])
+    fn rspread_chunks<const M: usize>(self) -> ([T; N % M], [[T; N / M]; M])
     where
         [(); M - 1]:,
         [(); N % M]:,
         [(); N / M]:
     {
-        crate::rspread(self)
+        crate::rspread_chunks(self)
     }
-    fn rspread_ref<const M: usize>(&self) -> (&[T; N % M], [&[Padded<T, M>; N / M]; M])
+    fn rspread_chunks_ref<const M: usize>(&self) -> (&[T; N % M], [&[Padded<T, M>; N / M]; M])
     where
         [(); M - 1]:,
         [(); N % M]:
@@ -2852,7 +2852,7 @@ impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
             ArrayOps::fill(|i| &*right.add(i).cast())
         )}
     }
-    fn rspread_mut<const M: usize>(&mut self) -> (&mut [T; N % M], [&mut [Padded<T, M>; N / M]; M])
+    fn rspread_chunks_mut<const M: usize>(&mut self) -> (&mut [T; N % M], [&mut [Padded<T, M>; N / M]; M])
     where
         [(); M - 1]:,
         [(); N % M]:
@@ -2864,15 +2864,15 @@ impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
             ArrayOps::fill(|i| &mut *right.add(i).cast())
         )}
     }
-    fn spread_exact<const M: usize>(self) -> [[T; N / M]; M]
+    fn spread_chunks_exact<const M: usize>(self) -> [[T; N / M]; M]
     where
         [(); M - 1]:,
         [(); 0 - N % M]:,
         [(); N / M]:
     {
-        crate::spread_exact(self)
+        crate::spread_chunks_exact(self)
     }
-    fn spread_exact_ref<const M: usize>(&self) -> [&[Padded<T, M>; N / M]; M]
+    fn spread_chunks_exact_ref<const M: usize>(&self) -> [&[Padded<T, M>; N / M]; M]
     where
         [(); M - 1]:,
         [(); 0 - N % M]:
@@ -2881,7 +2881,7 @@ impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
         
         ArrayOps::fill(|i| unsafe {&*ptr.add(i).cast()})
     }
-    fn spread_exact_mut<const M: usize>(&mut self) -> [&mut [Padded<T, M>; N / M]; M]
+    fn spread_chunks_exact_mut<const M: usize>(&mut self) -> [&mut [Padded<T, M>; N / M]; M]
     where
         [(); M - 1]:,
         [(); 0 - N % M]:
