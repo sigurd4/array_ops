@@ -178,14 +178,14 @@ mod tests {
             4, // Matematikk R2
         ];
 
-        let gpa_uni: f32 = GRADES_UNI.map2(|(pts, grade)| (pts*grade as u8) as u16)
+        let gpa_uni: f32 = GRADES_UNI.map_(|(pts, grade)| (pts*grade as u8) as u16)
             .sum_from(0) as f32
-            /GRADES_UNI.map2(const |(pts, _)| pts as u16)
+            /GRADES_UNI.map_(const |(pts, _)| pts as u16)
             .sum_from(0) as f32;
 
         println!("{}", gpa_uni);
 
-        let gpa_vgs: f32 = GRADES_VGS.map2(|grade| grade as u16)
+        let gpa_vgs: f32 = GRADES_VGS.map_(|grade| grade as u16)
             .sum_from(0) as f32
             /GRADES_VGS.len() as f32;
             
@@ -200,7 +200,7 @@ mod tests {
         
         assert_eq!(<[[[u8; 2]; N]; M]>::DIMENSIONS, [M, N, 2]);
 
-        let a: [[[u8; 2]; N]; M] = ArrayNdOps::fill_nd(|i| i.map2(|i| i as u8));
+        let a: [[[u8; 2]; N]; M] = ArrayNdOps::fill_nd(|i| i.map_(|i| i as u8));
 
         let t0 = SystemTime::now();
         for m in 0..M
@@ -256,11 +256,11 @@ mod tests {
         println!("Alignment padded x3 String = {}", core::mem::align_of::<Padded<String, 3>>());
 
         println!("str: {:?}", str);
-        println!("spread: {:?}", str.spread_ref::<3>());
+        println!("spread: {:?}", str.spread_chunks_ref::<3>());
         println!("chunks: {:?}", str.chunks_ref::<3>());
 
         assert_eq!(
-            str.spread::<3>(),
+            str.spread_chunks::<3>(),
             (
                 [
                     ['a', 'd', 'g', 'j', 'm', 'p', 's', 'v'],

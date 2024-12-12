@@ -124,7 +124,7 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     /// 
     /// assert_eq!(b, [-1, -2, -3, -4]);
     /// ```
-    fn map2<Map>(self, map: Map) -> [Map::Output; N]
+    fn map_<Map>(self, map: Map) -> [Map::Output; N]
     where
         Map: FnMut<(T,)> + ~const Destruct;
     fn map_outer<Map>(&self, map: Map) -> [[Map::Output; N]; N]
@@ -950,8 +950,8 @@ pub trait ArrayOps<T, const N: usize>: Array + IntoIterator<Item = T>
     where
         [(); N - M]:;
 
-    fn each_ref2(&self) -> [&T; N];
-    fn each_mut2(&mut self) -> [&mut T; N];
+    fn each_ref(&self) -> [&T; N];
+    fn each_mut(&mut self) -> [&mut T; N];
     
     /// Performs the bit-reverse permutation. Length must be a power of 2.
     /// 
@@ -1967,7 +1967,7 @@ impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
         ConstIterMut::from(self)
     }*/
     
-    fn map2<Map>(self, mut map: Map) -> [Map::Output; N]
+    fn map_<Map>(self, mut map: Map) -> [Map::Output; N]
     where
         Map: FnMut<(T,)> + Destruct
     {
@@ -2014,13 +2014,13 @@ impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
         T: Copy,
         Rhs: Copy
     {
-        self.map2(|x| rhs.map2(|y| map(x, y)))
+        self.map_(|x| rhs.map_(|y| map(x, y)))
     }
     fn flat_map<Map, O, const M: usize>(self, map: Map) -> [O; N*M]
     where
         Map: FnMut<(T,), Output = [O; M]> + Destruct
     {
-        let mapped = self.map2(map);
+        let mapped = self.map_(map);
         unsafe {
             private::transmute_unchecked_size(mapped)
         }
@@ -2271,7 +2271,7 @@ impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
     where
         T: PartialOrd<T>
     {
-        match self.each_ref2().enumerate().reduce(|a, b| if a.1 >= b.1 {a} else {b})
+        match self.each_ref().enumerate().reduce(|a, b| if a.1 >= b.1 {a} else {b})
         {
             Some((i, _)) => Some(i),
             None => None
@@ -2282,7 +2282,7 @@ impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
     where
         T: PartialOrd<T>
     {
-        match self.each_ref2().enumerate().reduce(|a, b| if a.1 <= b.1 {a} else {b})
+        match self.each_ref().enumerate().reduce(|a, b| if a.1 <= b.1 {a} else {b})
         {
             Some((i, _)) => Some(i),
             None => None
@@ -3007,7 +3007,7 @@ impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
         crate::rsplit_array_ref(self)
     }
 
-    fn each_ref2(&self) -> [&T; N]
+    fn each_ref(&self) -> [&T; N]
     {
         let ptr = self as *const T;
         ArrayOps::fill(|i| {
@@ -3015,7 +3015,7 @@ impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
             y
         })
     }
-    fn each_mut2(&mut self) -> [&mut T; N]
+    fn each_mut(&mut self) -> [&mut T; N]
     {
         let ptr = self as *mut T;
         ArrayOps::fill(|i| {
