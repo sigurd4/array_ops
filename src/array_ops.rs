@@ -1563,7 +1563,7 @@ where
     }
 }
 
-impl<T, const N: usize> ArrayOps<T, N> for [T; N]
+impl<T, const N: usize> /*const*/ ArrayOps<T, N> for [T; N]
 {
     //type Array<I, const M: usize> = [I; M];
     
